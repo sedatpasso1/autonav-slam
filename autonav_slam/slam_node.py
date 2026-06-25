@@ -19,7 +19,8 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 from sensor_msgs.msg import PointCloud2, Imu
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
+from std_msgs.msg import Header
 from tf2_ros import TransformBroadcaster
 
 import sensor_msgs_py.point_cloud2 as pc2
@@ -82,6 +83,7 @@ class AutoNavSLAM(Node):
 
         # ── Publishers ────────────────────────────────────────────────
         self.pub_odom = self.create_publisher(Odometry, "/slam/odometry", 10)
+        self.pub_pose = self.create_publisher(PoseStamped, "/slam/pose", 10)
         self.pub_map  = self.create_publisher(PointCloud2, "/slam/map", 1)
 
         # IMU buffer (deskewing için)
@@ -146,6 +148,12 @@ class AutoNavSLAM(Node):
 
         self.pub_odom.publish(odom)
 
+        # /slam/pose — PoseStamped (RViz ve downstream için)
+        pose_msg = PoseStamped()
+        pose_msg.header = odom.header
+        pose_msg.pose   = odom.pose.pose
+        self.pub_pose.publish(pose_msg)
+
         # TF: map → base_link
         tf = TransformStamped()
         tf.header.stamp    = msg.header.stamp
@@ -172,12 +180,10 @@ class AutoNavSLAM(Node):
 
     def _publish_map(self, stamp) -> None:
         all_pts = np.vstack(self._map_clouds).astype(np.float32)
-        map_msg = pc2.create_cloud_xyz32(
-            header=rclpy.impl.rcutils_logger.RcutilsLogger,
-            points=all_pts.tolist(),
-        )
-        map_msg.header.stamp    = stamp
-        map_msg.header.frame_id = self.map_frame
+        h = Header()
+        h.stamp    = stamp
+        h.frame_id = self.map_frame
+        map_msg = pc2.create_cloud_xyz32(header=h, points=all_pts.tolist())
         self.pub_map.publish(map_msg)
 
 

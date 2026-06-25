@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+
+  # ── SLAM düğümü (canlı LiDAR/IMU için) ────────────────────────────
+  slam:
+    build: .
+    image: autonav-slam:latest
+    container_name: autonav_slam
+    network_mode: host          # ROS2 DDS discovery için host network
+    environment:
+      - ROS_DOMAIN_ID=0
+    volumes:
+      - ./data:/ros2_ws/data    # rosbag ve harita çıktıları için
+    restart: unless-stopped
+
+  # ── Rosbag test (docker compose --profile test up slam_test) ──────
+  slam_test:
+    build: .
+    image: autonav-slam:latest
+    container_name: autonav_slam_test
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=0
+      - TEST_SEQUENCE: ${TEST_SEQUENCE:-KAIST01}
+    volumes:
+      - ./data:/ros2_ws/data
+      - ./tests:/ros2_ws/tests
+    command: >
+      /bin/bash -c "
+        source /opt/ros/humble/setup.bash &&
+        source /ros2_ws/install/setup.bash &&
+        bash /ros2_ws/src/autonav_slam/scripts/test_with_rosbag.sh $$TEST_SEQUENCE
+      "
+    profiles:
+      - test
+
+  # ── Unit test runner ──────────────────────────────────────────────
+  unit_test:
+    build: .
+    image: autonav-slam:latest
+    container_name: autonav_unit_test
+    network_mode: host
+    volumes:
+      - ./tests:/ros2_ws/tests
+    command: >
+      /bin/bash -c "
+        source /opt/ros/humble/setup.bash &&
+        source /ros2_ws/install/setup.bash &&
+        python3 -m pytest /ros2_ws/tests/test_slam_node.py -v
+      "
+    profiles:
+      - test

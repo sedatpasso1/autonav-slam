@@ -5,6 +5,8 @@ build/
 install/
 log/
 data/mulran/
+data/test_result_*.txt
+frames.pdf
 *.bag
 *.db3
 .venv/
