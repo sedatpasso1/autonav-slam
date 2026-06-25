@@ -1,0 +1,15 @@
+autonav_slam:
+  ros__parameters:
+    # Topic adları — donanımınıza göre değiştirin
+    lidar_topic: "/velodyne_points"
+    imu_topic: "/imu/data"
+
+    # KISS-ICP parametreleri
+    voxel_size: 0.3       # metre — küçük = hassas ama yavaş, büyük = hızlı ama kaba
+    max_range: 100.0      # metre — LiDAR max menzil
+    min_range: 1.0        # metre — yakın nokta filtresi (araç gövdesi vs.)
+
+    # Frame isimleri
+    map_frame: "map"
+    odom_frame: "odom"
+    base_frame: "base_link"

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>autonav_slam</name>
+  <version>0.1.0</version>
+  <description>
+    ROS2 Humble LiDAR-IMU SLAM modülü — KISS-ICP tabanlı gerçek zamanlı
+    3D haritalama ve lokalizasyon. Otonom araç navigasyonu için tasarlandı.
+  </description>
+  <maintainer email="sedatpasso@gmail.com">Berat</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>sensor_msgs_py</depend>
+
+  <exec_depend>kiss-icp</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
