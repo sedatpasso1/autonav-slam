@@ -12,6 +12,7 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("lidar_topic", default_value="/velodyne_points"),
         DeclareLaunchArgument("imu_topic",   default_value="/imu/data"),
         DeclareLaunchArgument("voxel_size",  default_value="0.3"),
+        DeclareLaunchArgument("backend",     default_value="kiss_icp"),
         DeclareLaunchArgument("use_rviz",    default_value="true"),
 
         Node(
@@ -25,6 +26,7 @@ def generate_launch_description() -> LaunchDescription:
                     "lidar_topic": LaunchConfiguration("lidar_topic"),
                     "imu_topic":   LaunchConfiguration("imu_topic"),
                     "voxel_size":  LaunchConfiguration("voxel_size"),
+                    "backend":     LaunchConfiguration("backend"),
                 },
             ],
         ),

@@ -35,6 +35,41 @@ services:
     profiles:
       - test
 
+  # ── FAST-LIO2 backend (IMU preintegration + ICP) ─────────────────
+  fast_lio2:
+    build: .
+    image: autonav-slam:latest
+    container_name: autonav_fast_lio2
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=0
+    volumes:
+      - ./data:/ros2_ws/data
+    command: >
+      /bin/bash -c "
+        source /opt/ros/humble/setup.bash &&
+        source /ros2_ws/install/setup.bash &&
+        ros2 launch autonav_slam fast_lio2.launch.py
+      "
+
+  # ── Backend karşılaştırma (python3 scripts/compare_backends.py) ──
+  backend_compare:
+    build: .
+    image: autonav-slam:latest
+    container_name: autonav_backend_compare
+    network_mode: host
+    volumes:
+      - ./data:/ros2_ws/data
+      - ./scripts:/ros2_ws/scripts
+    command: >
+      /bin/bash -c "
+        source /opt/ros/humble/setup.bash &&
+        source /ros2_ws/install/setup.bash &&
+        python3 /ros2_ws/scripts/compare_backends.py
+      "
+    profiles:
+      - compare
+
   # ── Unit test runner ──────────────────────────────────────────────
   unit_test:
     build: .

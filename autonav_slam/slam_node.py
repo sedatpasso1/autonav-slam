@@ -41,6 +41,7 @@ class AutoNavSLAM(Node):
         self.declare_parameter("map_frame", "map")
         self.declare_parameter("odom_frame", "odom")
         self.declare_parameter("base_frame", "base_link")
+        self.declare_parameter("backend", "kiss_icp")  # kiss_icp | fast_lio2
 
         lidar_topic  = self.get_parameter("lidar_topic").value
         imu_topic    = self.get_parameter("imu_topic").value
@@ -50,14 +51,25 @@ class AutoNavSLAM(Node):
         self.map_frame  = self.get_parameter("map_frame").value
         self.odom_frame = self.get_parameter("odom_frame").value
         self.base_frame = self.get_parameter("base_frame").value
+        backend_type = self.get_parameter("backend").value
 
-        # ── KISS-ICP (online/realtime API) ───────────────────────────
-        cfg = KISSConfig()
-        cfg.data.deskew       = False  # deskew devre dışı; IMU entegrasyonu sonraki aşama
-        cfg.data.max_range    = max_range
-        cfg.data.min_range    = min_range
-        cfg.mapping.voxel_size = voxel_size
-        self.pipeline = KissICP(config=cfg)
+        # ── Backend seçimi ───────────────────────────────────────────
+        if backend_type == "fast_lio2":
+            from autonav_slam.fast_lio2_node import FastLIO2Backend
+            self.pipeline = FastLIO2Backend(
+                voxel_size=voxel_size,
+                max_range=max_range,
+                min_range=min_range,
+            )
+            self._backend = "fast_lio2"
+        else:
+            cfg = KISSConfig()
+            cfg.data.deskew        = False
+            cfg.data.max_range     = max_range
+            cfg.data.min_range     = min_range
+            cfg.mapping.voxel_size = voxel_size
+            self.pipeline = KissICP(config=cfg)
+            self._backend = "kiss_icp"
 
         # Akümüle harita (basit: son N scan)
         self._map_clouds: list[np.ndarray] = []
@@ -107,6 +119,10 @@ class AutoNavSLAM(Node):
         cutoff = t - 0.5
         self._imu_buf = [(s, v) for s, v in self._imu_buf if s >= cutoff]
 
+        # FAST-LIO2 backend'i de besle
+        if self._backend == "fast_lio2":
+            self.pipeline.add_imu(t, ang)
+
     # ── LiDAR callback ───────────────────────────────────────────────
     def _lidar_cb(self, msg: PointCloud2) -> None:
         stamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
@@ -120,15 +136,13 @@ class AutoNavSLAM(Node):
         if len(pts) < 10:
             return
 
-        # IMU angular velocity (deskewing için ortalama)
-        if self._imu_buf:
-            ang_vel = np.mean([v for _, v in self._imu_buf], axis=0)
+        # Backend'e göre register_frame çağrısı
+        if self._backend == "fast_lio2":
+            pose = self.pipeline.register_frame(pts, stamp)
         else:
-            ang_vel = None
-
-        # KISS-ICP adımı (deskew=False → timestamps boş dizi)
-        self.pipeline.register_frame(pts, timestamps=np.array([]))
-        pose = self.pipeline.last_pose
+            # KISS-ICP: deskew=False → boş timestamps
+            self.pipeline.register_frame(pts, timestamps=np.array([]))
+            pose = self.pipeline.last_pose
 
         # Pose → odometry mesajı
         odom = Odometry()

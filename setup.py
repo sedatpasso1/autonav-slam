@@ -18,7 +18,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "slam_node = autonav_slam.slam_node:main",
+            "slam_node       = autonav_slam.slam_node:main",
+            "fast_lio2_node  = autonav_slam.fast_lio2_node:main",
         ],
     },
 )

@@ -1,0 +1,36 @@
+fast_lio2_node:
+  ros__parameters:
+    # Topic adları
+    lidar_topic: "/lidar/points"
+    imu_topic: "/imu/data"
+
+    # Frame isimleri
+    map_frame: "map"
+    base_frame: "base_link"
+
+    # LiDAR tipi: velodyne | ouster | livox
+    lidar_type: "velodyne"
+
+    # LiDAR-IMU kalibrasyonu
+    # IMU timestamp = LiDAR timestamp + time_offset_lidar_to_imu (saniye)
+    time_offset_lidar_to_imu: 0.0
+
+    # LiDAR→IMU dönüşüm: extrinsic_T (çeviri, metre) + extrinsic_R (rotasyon, row-major 3x3)
+    extrinsic_T: [0.0, 0.0, 0.0]
+    extrinsic_R: [
+      1.0, 0.0, 0.0,
+      0.0, 1.0, 0.0,
+      0.0, 0.0, 1.0
+    ]
+
+    # Nokta bulutu parametreleri
+    voxel_size: 0.1          # metre — FAST-LIO2 daha küçük voxel kullanır (KISS-ICP 0.3)
+    max_range:  100.0
+    min_range:  1.0
+
+    # ICP parametreleri
+    icp_max_iter: 5
+    icp_max_dist: 2.0        # metre — eşleşme için max mesafe
+
+    # IMU frekans (Hz) — preintegrasyon dt hesabı için
+    imu_frequency: 200.0
