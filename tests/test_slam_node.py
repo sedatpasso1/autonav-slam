@@ -122,7 +122,7 @@ class TestAutoNavSLAM(unittest.TestCase):
         self.assertEqual(self.slam.get_name(), "autonav_slam")
 
     def test_02_publishers_exist(self) -> None:
-        names = [info.name for info in self.slam.get_publisher_names_and_types_by_node(
+        names = [t[0] for t in self.slam.get_publisher_names_and_types_by_node(
             "autonav_slam", "")]
         self.assertIn("/slam/odometry", names)
         self.assertIn("/slam/pose",     names)
@@ -216,6 +216,8 @@ class TestAutoNavSLAM(unittest.TestCase):
 
     def test_13_sparse_cloud_ignored(self) -> None:
         """< 10 noktalı cloud işlenmemeli (odom sayısı değişmemeli)."""
+        # Önceki testlerden kalan pending callback'lerin bitmesini bekle
+        time.sleep(0.5)
         initial = len(self.received_odom)
         # 5 noktalı cloud gönder — node bunu atlamalı
         stamp = self.slam.get_clock().now().to_msg()

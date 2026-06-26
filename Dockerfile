@@ -18,11 +18,14 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Python bağımlılıkları
+# Python bağımlılıkları (--trusted-host: kurumsal proxy SSL bypass)
 RUN pip3 install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host pypi.python.org \
+    --trusted-host files.pythonhosted.org \
     "kiss-icp>=1.0.0" \
     numpy \
-    mulran2bag
+    pytest
 
 # Workspace kurulum
 WORKDIR /ros2_ws/src

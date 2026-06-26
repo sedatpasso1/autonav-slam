@@ -24,7 +24,7 @@ from std_msgs.msg import Header
 from tf2_ros import TransformBroadcaster
 
 import sensor_msgs_py.point_cloud2 as pc2
-from kiss_icp.pipeline import OdometryPipeline
+from kiss_icp.kiss_icp import KissICP
 from kiss_icp.config import KISSConfig
 
 
@@ -51,13 +51,13 @@ class AutoNavSLAM(Node):
         self.odom_frame = self.get_parameter("odom_frame").value
         self.base_frame = self.get_parameter("base_frame").value
 
-        # ── KISS-ICP pipeline ─────────────────────────────────────────
+        # ── KISS-ICP (online/realtime API) ───────────────────────────
         cfg = KISSConfig()
-        cfg.data.deskew       = True       # IMU ile motion deskew
+        cfg.data.deskew       = False  # deskew devre dışı; IMU entegrasyonu sonraki aşama
         cfg.data.max_range    = max_range
         cfg.data.min_range    = min_range
         cfg.mapping.voxel_size = voxel_size
-        self.pipeline = OdometryPipeline(config=cfg)
+        self.pipeline = KissICP(config=cfg)
 
         # Akümüle harita (basit: son N scan)
         self._map_clouds: list[np.ndarray] = []
@@ -126,8 +126,9 @@ class AutoNavSLAM(Node):
         else:
             ang_vel = None
 
-        # KISS-ICP adımı
-        pose, _ = self.pipeline.register_frame(pts, ang_vel)
+        # KISS-ICP adımı (deskew=False → timestamps boş dizi)
+        self.pipeline.register_frame(pts, timestamps=np.array([]))
+        pose = self.pipeline.last_pose
 
         # Pose → odometry mesajı
         odom = Odometry()

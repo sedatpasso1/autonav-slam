@@ -22,7 +22,7 @@ services:
     network_mode: host
     environment:
       - ROS_DOMAIN_ID=0
-      - TEST_SEQUENCE: ${TEST_SEQUENCE:-KAIST01}
+      - TEST_SEQUENCE=${TEST_SEQUENCE:-KAIST01}
     volumes:
       - ./data:/ros2_ws/data
       - ./tests:/ros2_ws/tests
